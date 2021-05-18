@@ -143,6 +143,32 @@ simcond(nsim=nsim,rtestsm,ctests,htests[[length(htests)]],z,pv)
 #simulating the full trial with a conditional update, note this uses parallel computation
 cl = makeCluster(no_cores)
 
-simfullpar(pv,htests,Kadd,alpha,funloc,nsim=nsim,p=p,p0=p0,cl)
+simresfull = simfullpar(pv,htests,Kadd,alpha,funloc,nsim=nsim,p=p,p0=p0,cl)
 
 stopCluster(cl)
+
+#gather the important results from the simulation of the full trial
+
+#prepare to store the rsults
+exss = numeric(nsim)
+hmat = matrix(0,ncol=4,nrow=nsim)
+#can be used to check if the trial continues or not
+cont = numeric(nsim)
+
+#this loop takes the relavent information from the simulation
+for(k in 1:nsim)
+{
+  exss[k] = simresfull[[k]]$exss
+  hmat[k,] = simresfull[[k]]$hmat
+  cont[k] = simresfull[[k]]$exss > 30
+}
+#if the expected sample size is less than the possible minimum set it to be the minimum
+exss[which(exss<30)] = 30
+
+#output the results
+message(paste("$(",pv[1],",",pv[2],",",pv[3],",",pv[4],")$"," & ",
+              round(colMeans(hmat)[1],digits=2)," & ",
+              round(colMeans(hmat)[2],digits=2)," & ",
+              round(colMeans(hmat)[3],digits=2)," & ",
+              round(colMeans(hmat)[4],digits=2)," & ",
+              round(mean(exss),digits=0)," \\\\"))
